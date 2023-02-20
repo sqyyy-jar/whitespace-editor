@@ -2,8 +2,9 @@ const width = self.innerWidth
 const height = self.innerHeight
 const base = document.querySelector<HTMLCanvasElement>('#base')!
 const context = base.getContext('2d')!
-const screen = {
+const state = {
     lines: 0,
+    maxLog: 5,
     logback: <string[]>[],
     boxes: 10,
     elements: <number[]>[],
@@ -18,14 +19,14 @@ function clearFrame() {
 }
 
 function resetLog() {
-    screen.lines = 0
-    screen.logback = []
+    state.lines = 0
+    state.logback = []
 }
 
 function resetElements() {
-    screen.elements = []
-    for (let i = 0; i < screen.boxes * screen.boxes; i++) {
-        screen.elements.push(0)
+    state.elements = []
+    for (let i = 0; i < state.boxes * state.boxes; i++) {
+        state.elements.push(0)
     }
 }
 
@@ -35,11 +36,11 @@ function reset() {
 }
 
 function log(message: string) {
-    screen.lines += 1
-    screen.logback.push(message)
-    if (screen.lines * 30 >= height) {
-        screen.lines -= 1
-        screen.logback.shift()
+    state.lines += 1
+    state.logback.push(message)
+    if (state.lines > state.maxLog) {
+        state.lines -= 1
+        state.logback.shift()
         redraw()
         return
     }
@@ -49,10 +50,10 @@ function log(message: string) {
 function drawElements() {
     const colors = ['white', '#c605a6', 'aqua', 'yellow', 'black', 'orange', 'blue', 'red', 'purple', 'pink', '#98FB98']
     const offset = Math.round((Math.max(width, height) - Math.min(width, height)) / 2)
-    const boxWidth = Math.round(Math.min(width, height) / screen.boxes)
-    for (let x = 0; x < screen.boxes; x++) {
-        for (let y = 0; y < screen.boxes; y++) {
-            const element = screen.elements[x * screen.boxes + y]
+    const boxWidth = Math.round(Math.min(width, height) / state.boxes)
+    for (let x = 0; x < state.boxes; x++) {
+        for (let y = 0; y < state.boxes; y++) {
+            const element = state.elements[x * state.boxes + y]
             context.fillStyle = colors[element]
             if (width > height) {
                 context.fillRect(boxWidth * x + offset, boxWidth * y, boxWidth, boxWidth)
@@ -66,8 +67,8 @@ function drawElements() {
 function drawLog() {
     font()
     context.fillStyle = '#98FB98'
-    for (let i = 0; i < screen.logback.length; i++) {
-        context.fillText(screen.logback[i], 1, i * 30 + 30)
+    for (let i = 0; i < state.logback.length; i++) {
+        context.fillText(state.logback[i], 1, i * 30 + 30)
     }
 }
 
@@ -78,10 +79,10 @@ function redraw() {
 }
 
 function loadElements() {
-    for (let x = 0; x < screen.boxes; x++) {
-        for (let y = 0; y < screen.boxes; y++) {
+    for (let x = 0; x < state.boxes; x++) {
+        for (let y = 0; y < state.boxes; y++) {
             const element = Math.round(Math.random() * 9.501);
-            screen.elements[x * screen.boxes + y] = element
+            state.elements[x * state.boxes + y] = element
             if (element == 10) {
                 log('An exotic square was revealed')
             }
@@ -94,8 +95,9 @@ export function load() {
     base.height = height
     reset()
     log(`Size: ${width}:${height}`)
+    loadElements()
+    redraw()
     base.addEventListener('click', _ => {
-        resetElements()
         loadElements()
         redraw()
     })
